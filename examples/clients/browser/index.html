@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voice Input Bridge - Web Audio client</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { max-width: 780px; margin: 48px auto; padding: 0 20px; line-height: 1.5; }
+    h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+    .muted { opacity: .7; }
+    .panel { border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+      border-radius: 14px; padding: 18px; margin-top: 20px; }
+    label { display: block; font-weight: 650; margin-top: 12px; }
+    input { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 8px;
+      border: 1px solid color-mix(in srgb, currentColor 30%, transparent); background: transparent; color: inherit; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    button { border: 0; border-radius: 9px; padding: 10px 16px; font-weight: 650; cursor: pointer; }
+    button.primary { background: #2563eb; color: white; }
+    button.danger { background: #dc2626; color: white; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    #status { margin-top: 14px; font-family: ui-monospace, monospace; }
+    #transcript { min-height: 8rem; white-space: pre-wrap; font-size: 1.15rem; }
+  </style>
+</head>
+<body>
+  <h1>Voice Input Bridge</h1>
+  <p class="muted">浏览器采集麦克风、降采样为 16 kHz PCM，并通过 WebSocket 实时发送。</p>
+
+  <section class="panel">
+    <label for="endpoint">WebSocket endpoint</label>
+    <input id="endpoint" value="ws://127.0.0.1:18766/v1/audio" spellcheck="false">
+    <label for="token">Token（未启用鉴权时留空）</label>
+    <input id="token" type="password" autocomplete="off">
+    <div class="row">
+      <button id="connect" class="primary">连接</button>
+      <button id="start" class="primary" disabled>开始说话</button>
+      <button id="stop" class="danger" disabled>结束</button>
+    </div>
+    <div id="status">disconnected</div>
+  </section>
+
+  <section class="panel">
+    <div class="muted">实时转写</div>
+    <div id="transcript"></div>
+  </section>
+
+<script>
+(() => {
+  let ws = null;
+  let audioContext = null;
+  let mediaStream = null;
+  let sourceNode = null;
+  let processorNode = null;
+  let sequence = 0;
+  let finalText = "";
+  let partialText = "";
+
+  const endpoint = document.querySelector("#endpoint");
+  const token = document.querySelector("#token");
+  const connectButton = document.querySelector("#connect");
+  const startButton = document.querySelector("#start");
+  const stopButton = document.querySelector("#stop");
+  const status = document.querySelector("#status");
+  const transcript = document.querySelector("#transcript");
+
+  function setStatus(value) { status.textContent = value; }
+  function renderTranscript() { transcript.textContent = finalText + partialText; }
+  function send(message) { ws?.send(JSON.stringify(message)); }
+
+  function frame(payload, seq) {
+    const buffer = new ArrayBuffer(8 + payload.byteLength);
+    const view = new DataView(buffer);
+    view.setUint8(0, 0x41);
+    view.setUint8(1, 0x55);
+    view.setUint8(2, 0x44);
+    view.setUint8(3, 0x31);
+    view.setUint16(4, payload.byteLength, true);
+    view.setUint16(6, seq & 0xffff, true);
+    new Uint8Array(buffer, 8).set(new Uint8Array(payload));
+    return buffer;
+  }
+
+  function downsampleToPcm16(input, inputRate) {
+    const ratio = inputRate / 16000;
+    const length = Math.max(1, Math.floor(input.length / ratio));
+    const result = new Int16Array(length);
+    for (let i = 0; i < length; i += 1) {
+      const start = Math.floor(i * ratio);
+      const end = Math.max(start + 1, Math.floor((i + 1) * ratio));
+      let sum = 0;
+      for (let j = start; j < end && j < input.length; j += 1) sum += input[j];
+      const sample = Math.max(-1, Math.min(1, sum / (end - start)));
+      result[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    }
+    return result;
+  }
+
+  async function startAudio() {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    audioContext = new AudioContext();
+    await audioContext.resume();
+    sourceNode = audioContext.createMediaStreamSource(mediaStream);
+    processorNode = audioContext.createScriptProcessor(2048, 1, 1);
+    processorNode.onaudioprocess = (event) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const pcm = downsampleToPcm16(event.inputBuffer.getChannelData(0), audioContext.sampleRate);
+      ws.send(frame(pcm.buffer, sequence));
+      sequence = (sequence + 1) & 0xffff;
+      event.outputBuffer.getChannelData(0).fill(0);
+    };
+    sourceNode.connect(processorNode);
+    processorNode.connect(audioContext.destination);
+    send({
+      type: "start", sampleRate: 16000, channels: 1, bitsPerSample: 16,
+      encoding: "pcm_s16le", language: "zh-CN"
+    });
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    setStatus("listening - speak now");
+  }
+
+  function stopAudio(notifyServer = true) {
+    if (notifyServer && ws?.readyState === WebSocket.OPEN) send({ type: "stop" });
+    processorNode?.disconnect();
+    sourceNode?.disconnect();
+    mediaStream?.getTracks().forEach((track) => track.stop());
+    audioContext?.close();
+    processorNode = sourceNode = mediaStream = audioContext = null;
+    startButton.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+    stopButton.disabled = true;
+  }
+
+  connectButton.addEventListener("click", () => {
+    if (ws && ws.readyState <= WebSocket.OPEN) { ws.close(); return; }
+    transcript.textContent = "";
+    finalText = partialText = "";
+    ws = new WebSocket(endpoint.value.trim());
+    ws.binaryType = "arraybuffer";
+    setStatus("connecting");
+    ws.onopen = () => {
+      setStatus("connected - authenticating");
+      send({ type: "hello", token: token.value });
+    };
+    ws.onmessage = (event) => {
+      if (typeof event.data !== "string") return;
+      const message = JSON.parse(event.data);
+      if (message.type === "hello_ack") {
+        setStatus("connected");
+        connectButton.textContent = "断开";
+        startButton.disabled = false;
+      } else if (message.type === "partial") {
+        partialText = message.text || "";
+        renderTranscript();
+      } else if (message.type === "final") {
+        finalText += message.text || "";
+        partialText = "";
+        renderTranscript();
+      } else if (message.type === "warning") {
+        setStatus(`warning: ${message.code}`);
+      } else if (message.type === "error") {
+        setStatus(`error: ${message.code} - ${message.message}`);
+        if (message.code !== "idle_timeout") stopAudio(false);
+      } else if (message.type === "session_end") {
+        partialText = "";
+        renderTranscript();
+        setStatus("session ended");
+      }
+    };
+    ws.onerror = () => setStatus("websocket error");
+    ws.onclose = (event) => {
+      setStatus(`disconnected (${event.code})`);
+      connectButton.textContent = "连接";
+      startButton.disabled = true;
+      stopButton.disabled = true;
+      stopAudio(false);
+      ws = null;
+    };
+  });
+
+  startButton.addEventListener("click", () => startAudio().catch((error) => setStatus(String(error))));
+  stopButton.addEventListener("click", () => { stopAudio(true); setStatus("finishing"); });
+})();
+</script>
+</body>
+</html>

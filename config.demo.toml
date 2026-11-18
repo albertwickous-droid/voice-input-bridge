@@ -1,0 +1,46 @@
+# Safe, offline demo: mock ASR and no foreground text injection.
+# Run in one terminal:
+#   voicebridge serve --config config.demo.toml
+# Run in another terminal:
+#   voicebridge simulate --target ws://127.0.0.1:18766/v1/audio
+
+[server]
+host = "127.0.0.1"
+http_host = "127.0.0.1"
+http_port = 18765
+ws_port = 18766
+tcp_port = 18767
+discovery_port = 18768
+require_token = false
+max_audio_seconds = 30
+idle_timeout_seconds = 60
+
+[transports.websocket]
+enabled = true
+path = "/v1/audio"
+
+[transports.tcp]
+enabled = true
+
+[transports.serial]
+enabled = false
+
+[transports.discovery]
+enabled = false
+
+[asr]
+provider = "mock"
+language = "zh-CN"
+
+[asr.mock]
+transcript = "你好，世界。这是 Voice Input Bridge 的离线演示。"
+partial_words = ["你好", "你好世界", "你好，世界。这是"]
+
+[input]
+backend = "null"
+send_partial = true
+require_same_window = false
+
+[logging]
+level = "INFO"
+json = false

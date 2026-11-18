@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a provider, transport, integration, or usability improvement
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What real deployment or user problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - ASR provider
+        - Transport/device
+        - Text injection
+        - CLI/configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and tradeoffs
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Ecosystem evidence
+      description: For an open-source dependency or provider, include maintenance, release, license, adoption, and risk evidence.

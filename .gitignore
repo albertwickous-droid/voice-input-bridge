@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Environments and secrets
+.venv/
+venv/
+.env
+config.local.toml
+*.local.toml
+*.pem
+*.key
+
+# Runtime output
+runtime/
+*.log
+*.wav
+*.pcm
+recordings/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

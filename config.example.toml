@@ -1,0 +1,93 @@
+# Voice Input Bridge configuration.
+# Copy this file to config.toml and edit only the sections you need.
+# `${VAR}` and `${VAR:-default}` are expanded from the process environment.
+
+[server]
+# Bind address. Use 127.0.0.1 for local-only operation.
+host = "127.0.0.1"
+http_host = "127.0.0.1"
+http_port = 18765
+ws_port = 18766
+tcp_port = 18767
+discovery_port = 18768
+token = "${VOICEBRIDGE_TOKEN:-}"
+require_token = false
+max_audio_seconds = 120
+idle_timeout_seconds = 60
+
+[transports.websocket]
+enabled = true
+path = "/v1/audio"
+
+[transports.tcp]
+enabled = true
+
+[transports.serial]
+enabled = false
+# "auto" scans for common CDC ACM devices. Set COM3, /dev/cu.usbmodem*, etc.
+port = "auto"
+baudrate = 115200
+
+[transports.discovery]
+enabled = false
+
+[asr]
+# Built-ins: mock, aliyun, deepgram, command.
+# Third-party packages can register more providers through the
+# `voicebridge.providers` Python entry-point group.
+provider = "mock"
+language = "zh-CN"
+
+[asr.mock]
+# Useful for protocol and installation checks without a cloud account.
+transcript = "Voice Input Bridge mock transcription."
+partial_words = ["Voice", "Voice Input", "Voice Input Bridge"]
+
+[asr.aliyun]
+model = "paraformer-realtime-v2"
+api_key = "${DASHSCOPE_API_KEY:-}"
+workspace_id = "${DASHSCOPE_WORKSPACE_ID:-}"
+region = "${DASHSCOPE_REGION:-}"
+vocabulary_id = "${DASHSCOPE_VOCABULARY_ID:-}"
+language_hints = ["zh", "en"]
+final_timeout_seconds = 20
+
+[asr.deepgram]
+endpoint = "wss://api.deepgram.com/v1/listen"
+api_key = "${DEEPGRAM_API_KEY:-}"
+model = "nova-3"
+language = "zh-CN"
+smart_format = true
+punctuate = true
+interim_results = true
+final_timeout_seconds = 20
+
+[asr.command]
+# Any executable that accepts a WAV path and prints the transcript to stdout.
+# This is the universal adapter for whisper.cpp, MLX Whisper, vendor CLIs, etc.
+# Use `{wav}` and `{language}` placeholders. No shell is invoked.
+command = [
+  "whisper-cli",
+  "-m", "models/ggml-base.bin",
+  "-f", "{wav}",
+  "-l", "{language}",
+  "-nt",
+]
+timeout_seconds = 180
+max_audio_seconds = 120
+output_encoding = "utf-8"
+
+[input]
+# auto, windows, macos, clipboard, stdout, null
+backend = "auto"
+send_partial = true
+final_suffix = ""
+require_same_window = true
+# The clipboard fallback is final-only and cannot guard the foreground window.
+# If you explicitly choose it, also set require_same_window = false.
+# Supported values: auto, ctrl+v, cmd+v.
+paste_shortcut = "auto"
+
+[logging]
+level = "INFO"
+json = false
