@@ -85,6 +85,7 @@ def test_windows_input_structure_size() -> None:
     if ctypes.sizeof(ctypes.c_void_p) == 8:
         assert ctypes.sizeof(_INPUT) == 40
 
+
 def test_clipboard_requires_explicit_disable_of_foreground_guard() -> None:
     from voicebridge.input.clipboard import ClipboardSink
 

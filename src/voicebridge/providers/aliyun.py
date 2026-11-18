@@ -60,9 +60,7 @@ class AliyunParaformerProvider(ASRProvider):
     async def stream(self, request: ProviderRequest) -> AsyncIterator[TranscriptEvent]:
         fmt = request.audio_format
         if fmt.channels != 1 or fmt.bits_per_sample != 16 or fmt.sample_rate not in {8_000, 16_000}:
-            raise ProviderError(
-                "Aliyun Paraformer requires mono 16-bit PCM at 8000 or 16000 Hz"
-            )
+            raise ProviderError("Aliyun Paraformer requires mono 16-bit PCM at 8000 or 16000 Hz")
         try:
             from dashscope import Client
         except ImportError as exc:
@@ -75,18 +73,25 @@ class AliyunParaformerProvider(ASRProvider):
         ).strip()
         if not api_key:
             raise ProviderUnavailable("Aliyun requires DASHSCOPE_API_KEY")
-        workspace = str(
-            request.options.get("workspace_id")
-            or request.options.get("workspace")
-            or os.environ.get("DASHSCOPE_WORKSPACE_ID", "")
-        ).strip() or None
-        region = str(
-            request.options.get("region") or os.environ.get("DASHSCOPE_REGION", "")
-        ).strip() or None
-        vocabulary_id = str(
-            request.options.get("vocabulary_id")
-            or os.environ.get("DASHSCOPE_VOCABULARY_ID", "")
-        ).strip() or None
+        workspace = (
+            str(
+                request.options.get("workspace_id")
+                or request.options.get("workspace")
+                or os.environ.get("DASHSCOPE_WORKSPACE_ID", "")
+            ).strip()
+            or None
+        )
+        region = (
+            str(request.options.get("region") or os.environ.get("DASHSCOPE_REGION", "")).strip()
+            or None
+        )
+        vocabulary_id = (
+            str(
+                request.options.get("vocabulary_id")
+                or os.environ.get("DASHSCOPE_VOCABULARY_ID", "")
+            ).strip()
+            or None
+        )
         phrase_id = str(request.options.get("phrase_id") or "").strip() or None
         model = str(request.options.get("model", DEFAULT_MODEL))
         language_hints = request.options.get("language_hints") or ["zh", "en"]

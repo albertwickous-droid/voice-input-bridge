@@ -22,9 +22,7 @@ class MockProvider(ASRProvider):
         threshold = max(1, int(request.options.get("partial_after_bytes", 3_200)))
         partial_words = [
             str(item)
-            for item in request.options.get(
-                "partial_words", ["Mock", "Mock transcription"]
-            )
+            for item in request.options.get("partial_words", ["Mock", "Mock transcription"])
             if str(item)
         ]
         word_index = 0
@@ -38,9 +36,7 @@ class MockProvider(ASRProvider):
                     provider=self.name,
                 )
                 word_index += 1
-        final_text = str(
-            request.options.get("transcript", "Mock transcription.")
-        )
+        final_text = str(request.options.get("transcript", "Mock transcription."))
         yield TranscriptEvent(
             text=final_text,
             final=True,

@@ -188,9 +188,7 @@ class BridgeConfig:
                 "server.host is not loopback but server.token is empty; LAN clients are unauthenticated"
             )
         if self.server.network_exposed and not self.server.require_token:
-            warnings.append(
-                "server.require_token is false while listening on a network interface"
-            )
+            warnings.append("server.require_token is false while listening on a network interface")
         if self.server.require_token and not self.server.token:
             warnings.append(
                 "server.require_token is true but server.token is empty; all clients will be rejected"
@@ -259,13 +257,9 @@ def load_config(path: str | Path | None = None) -> BridgeConfig:
             http_port=_port(server.get("http_port"), "server.http_port", 18_765),
             ws_port=_port(server.get("ws_port"), "server.ws_port", 18_766),
             tcp_port=_port(server.get("tcp_port"), "server.tcp_port", 18_767),
-            discovery_port=_port(
-                server.get("discovery_port"), "server.discovery_port", 18_768
-            ),
+            discovery_port=_port(server.get("discovery_port"), "server.discovery_port", 18_768),
             token=_str(server.get("token"), "server.token", "").strip(),
-            require_token=_bool(
-                server.get("require_token"), "server.require_token", False
-            ),
+            require_token=_bool(server.get("require_token"), "server.require_token", False),
             max_audio_seconds=_float(
                 server.get("max_audio_seconds"), "server.max_audio_seconds", 120.0
             ),
@@ -277,29 +271,19 @@ def load_config(path: str | Path | None = None) -> BridgeConfig:
         ),
         transports=TransportConfig(
             websocket=WebSocketTransportConfig(
-                enabled=_bool(
-                    websocket.get("enabled"), "transports.websocket.enabled", True
-                ),
-                path=_str(
-                    websocket.get("path"), "transports.websocket.path", "/v1/audio"
-                ),
+                enabled=_bool(websocket.get("enabled"), "transports.websocket.enabled", True),
+                path=_str(websocket.get("path"), "transports.websocket.path", "/v1/audio"),
             ),
             tcp=TcpTransportConfig(
                 enabled=_bool(tcp.get("enabled"), "transports.tcp.enabled", True)
             ),
             serial=SerialTransportConfig(
-                enabled=_bool(
-                    serial.get("enabled"), "transports.serial.enabled", False
-                ),
+                enabled=_bool(serial.get("enabled"), "transports.serial.enabled", False),
                 port=_str(serial.get("port"), "transports.serial.port", "auto"),
-                baudrate=_int(
-                    serial.get("baudrate"), "transports.serial.baudrate", 115_200
-                ),
+                baudrate=_int(serial.get("baudrate"), "transports.serial.baudrate", 115_200),
             ),
             discovery=DiscoveryTransportConfig(
-                enabled=_bool(
-                    discovery.get("enabled"), "transports.discovery.enabled", False
-                )
+                enabled=_bool(discovery.get("enabled"), "transports.discovery.enabled", False)
             ),
         ),
         asr=ASRConfig(
@@ -309,20 +293,14 @@ def load_config(path: str | Path | None = None) -> BridgeConfig:
         ),
         input=InputConfig(
             backend=_str(input_table.get("backend"), "input.backend", "auto").lower(),
-            send_partial=_bool(
-                input_table.get("send_partial"), "input.send_partial", True
-            ),
-            final_suffix=_str(
-                input_table.get("final_suffix"), "input.final_suffix", ""
-            ),
+            send_partial=_bool(input_table.get("send_partial"), "input.send_partial", True),
+            final_suffix=_str(input_table.get("final_suffix"), "input.final_suffix", ""),
             require_same_window=_bool(
                 input_table.get("require_same_window"),
                 "input.require_same_window",
                 True,
             ),
-            paste_shortcut=_str(
-                input_table.get("paste_shortcut"), "input.paste_shortcut", "auto"
-            ),
+            paste_shortcut=_str(input_table.get("paste_shortcut"), "input.paste_shortcut", "auto"),
         ),
         logging=LoggingConfig(
             level=_str(logging_table.get("level"), "logging.level", "INFO").upper(),

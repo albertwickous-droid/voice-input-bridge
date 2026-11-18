@@ -93,6 +93,7 @@ async def test_udp_discovery_returns_non_secret_metadata() -> None:
     runtime = BridgeRuntime(config)
     await runtime.start()
     try:
+
         def query() -> dict[str, Any]:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(3)

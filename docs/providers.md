@@ -11,6 +11,33 @@ Voice Input Bridge keeps the provider boundary narrow: a provider receives a PCM
 | `deepgram` | partial + final | result segments | none beyond `websockets` | `DEEPGRAM_API_KEY` |
 | `command` | final only | one final after the audio ends | none | command-defined |
 
+## Vendor integration matrix
+
+Separate **"the vendor offers streaming"** from **"this project already ships an adapter"**. Only `aliyun`, `deepgram`, `mock`, and `command` are built-in providers. Other vendors require a provider plugin or a `command` wrapper; changing one `provider = "vendor"` value is not enough.
+
+| Region | Vendor / service | Integration in this project | Official streaming note | Official entry |
+| --- | --- | --- | --- | --- |
+| China | Alibaba Cloud Paraformer Realtime V2 | **Built-in `aliyun`** | partial + final; Chinese real-time dictation | [Docs](https://help.aliyun.com/zh/model-studio/paraformer-real-time-speech-recognition-api) · [Console](https://bailian.console.aliyun.com/) · [Pricing](https://help.aliyun.com/zh/model-studio/model-pricing) |
+| China | Tencent Cloud real-time ASR | Plugin / custom adapter required | Official streaming API; not built in here | [Docs](https://cloud.tencent.com/document/product/1093) · [Console](https://console.cloud.tencent.com/asr) · [Pricing](https://cloud.tencent.com/document/product/1093/35686) |
+| China | iFlytek real-time transcription | Plugin / custom adapter required | Official real-time WebSocket API | [Docs](https://www.xfyun.cn/doc/asr/rtasr/API.html) · [Console](https://console.xfyun.cn/) |
+| China | Baidu Cloud speech recognition | Plugin / custom adapter required | Implement Baidu authentication and audio streaming | [Docs](https://cloud.baidu.com/doc/SPEECH/s/2k5dllqxj) · [Product/pricing](https://cloud.baidu.com/product/speech/asr) |
+| China | Volcano Engine streaming ASR | Plugin / custom adapter required | Confirm model, region, and authentication in official docs | [Docs](https://www.volcengine.com/docs/6561/1354869) · [Product/pricing](https://www.volcengine.com/product/asr) |
+| China | Huawei Cloud SIS real-time ASR | Plugin / custom adapter required | Official Real-Time ASR request API | [Docs](https://support.huaweicloud.com/intl/en-us/api-sis/sis_03_0029.html) · [Product/pricing](https://www.huaweicloud.com/product/sis.html) |
+| Global | Deepgram | **Built-in `deepgram`** | partial + final; WebSocket linear16 | [Docs](https://developers.deepgram.com/docs/live-streaming-audio) · [Pricing](https://deepgram.com/pricing) |
+| Global | Microsoft Azure AI Speech | Plugin / custom adapter required | Speech SDK / streaming API | [Docs](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-to-text) · [Pricing](https://azure.microsoft.com/en-us/pricing/details/speech/) |
+| Global | Google Cloud Speech-to-Text | Plugin / custom adapter required | Streaming Recognize API | [Docs](https://cloud.google.com/speech-to-text/docs/streaming-recognize) · [Pricing](https://cloud.google.com/speech-to-text/pricing) |
+| Global | Amazon Transcribe Streaming | Plugin / custom adapter required | Official streaming API with AWS auth | [Docs](https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html) · [Pricing](https://aws.amazon.com/transcribe/pricing/) |
+| Global | AssemblyAI | Plugin / custom adapter required | Universal Streaming WebSocket | [Docs](https://www.assemblyai.com/docs/streaming/getting-started/transcribe-streaming-audio) · [Pricing](https://www.assemblyai.com/pricing) |
+| Global | Speechmatics | Plugin / custom adapter required | Realtime API; use the official WebSocket contract | [Docs](https://docs.speechmatics.com/speech-to-text/realtime/quickstart) · [Pricing](https://www.speechmatics.com/pricing) |
+| Global | Soniox | Plugin / custom adapter required | Real-time transcription API | [Docs](https://docs.soniox.com/stt/rt/real-time-transcription) · [Pricing](https://soniox.com/pricing/) |
+| Global | OpenAI Speech to Text | Plugin / custom adapter required | Check current streaming/model support in the official docs; not built in here | [Docs](https://platform.openai.com/docs/guides/speech-to-text) · [Pricing](https://openai.com/api/pricing/) |
+| Local | whisper.cpp | **Built-in `command` / final-only** | Usually returns after a complete recording; real-time needs a plugin or server mode | [GitHub](https://github.com/ggml-org/whisper.cpp) |
+| Local | faster-whisper | **Built-in `command` / final-only** | Usually file or chunk inference; add chunking for streaming | [GitHub](https://github.com/SYSTRAN/faster-whisper) |
+| Local | FunASR | **Built-in `command` / final-only** | Use its streaming API inside a custom provider for partials | [GitHub](https://github.com/modelscope/FunASR) |
+| Local | Vosk | **Built-in `command` / final-only** | Offline; manage model, memory, and chunking yourself | [GitHub](https://github.com/alphacep/vosk-api) |
+| Local | sherpa-onnx | Plugin / custom adapter required | Local inference on multiple platforms; implement a provider for each model/runtime | [GitHub](https://github.com/k2-fsa/sherpa-onnx) |
+| Test | mock | **Built-in `mock`** | Deterministic partial + final; no network | [Local docs](providers.md) |
+
 ### Alibaba Cloud Paraformer Realtime V2
 
 ```toml
@@ -58,7 +85,7 @@ final_timeout_seconds = 20
 - Audio: linear16 PCM; channel count is passed through to Deepgram.
 - Strength: direct WebSocket integration, multilingual service, partial and is_final results, and a clean cloud API.
 - Risks: cloud latency and availability, language/model differences, billing, and result semantics that can change by model.
-- Docs: <https://developers.deepgram.com/docs/>
+- Docs: <https://developers.deepgram.com/docs/live-streaming-audio>
 - Pricing: <https://deepgram.com/pricing>
 
 The adapter talks to the documented WebSocket endpoint directly, so it does not depend on the larger Deepgram SDK. The SDK is still relevant ecosystem evidence: it has frequent releases and substantial PyPI usage.

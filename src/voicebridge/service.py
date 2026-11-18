@@ -213,7 +213,12 @@ class VoiceBridgeService:
             status.state = SessionState.BUSY
             status.error = str(exc)
             await handle.emit(
-                {"type": "error", "code": "busy", "message": str(exc), "sessionId": status.session_id}
+                {
+                    "type": "error",
+                    "code": "busy",
+                    "message": str(exc),
+                    "sessionId": status.session_id,
+                }
             )
         except (ProviderUnavailable, ProviderError, InputError) as exc:
             status.state = SessionState.ERROR

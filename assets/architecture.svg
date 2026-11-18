@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="archTitle archDesc">
+  <title id="archTitle">Voice Input Bridge architecture</title>
+  <desc id="archDesc">Audio devices send PCM frames over WebSocket, TCP, or serial to the bridge; the bridge calls an ASR provider and injects partial and final text into the foreground text field.</desc>
+  <rect width="1200" height="520" rx="24" fill="#0b1220"/>
+  <text x="56" y="64" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Voice Input Bridge / data flow</text>
+  <text x="58" y="96" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="16">Transport, ASR provider, and text injection are independent boundaries.</text>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <rect x="54" y="156" width="220" height="176" rx="18" fill="#102b3c" stroke="#2c5b6b"/>
+    <text x="164" y="194" text-anchor="middle" fill="#5eead4" font-size="16" font-weight="700">01 / SOURCE</text>
+    <text x="78" y="232" fill="#e2e8f0" font-size="17">ESP32 · M5Stick</text>
+    <text x="78" y="262" fill="#e2e8f0" font-size="17">Browser · phone</text>
+    <text x="78" y="292" fill="#94a3b8" font-size="14">PCM S16LE audio</text>
+    <rect x="346" y="156" width="278" height="176" rx="18" fill="#102b3c" stroke="#2c5b6b"/>
+    <text x="485" y="194" text-anchor="middle" fill="#7dd3fc" font-size="16" font-weight="700">02 / TRANSPORT</text>
+    <text x="376" y="232" fill="#e2e8f0" font-size="17">WebSocket / TCP</text>
+    <text x="376" y="262" fill="#e2e8f0" font-size="17">USB serial / discovery</text>
+    <text x="376" y="292" fill="#94a3b8" font-size="14">JSON control + AUD1 frames</text>
+    <rect x="696" y="156" width="210" height="176" rx="18" fill="#102b3c" stroke="#2c5b6b"/>
+    <text x="801" y="194" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="700">03 / ASR</text>
+    <text x="726" y="232" fill="#e2e8f0" font-size="17">aliyun</text>
+    <text x="726" y="262" fill="#e2e8f0" font-size="17">deepgram</text>
+    <text x="726" y="292" fill="#e2e8f0" font-size="17">command / plugin</text>
+    <rect x="964" y="156" width="182" height="176" rx="18" fill="#102b3c" stroke="#2c5b6b"/>
+    <text x="1055" y="194" text-anchor="middle" fill="#c084fc" font-size="16" font-weight="700">04 / TARGET</text>
+    <text x="990" y="232" fill="#e2e8f0" font-size="17">SendInput</text>
+    <text x="990" y="262" fill="#e2e8f0" font-size="17">Quartz</text>
+    <text x="990" y="292" fill="#e2e8f0" font-size="17">Clipboard</text>
+    <path d="M280 244 H338" stroke="#5eead4" stroke-width="3"/>
+    <path d="M330 237 L340 244 L330 251" fill="none" stroke="#5eead4" stroke-width="3"/>
+    <path d="M632 244 H688" stroke="#7dd3fc" stroke-width="3"/>
+    <path d="M680 237 L690 244 L680 251" fill="none" stroke="#7dd3fc" stroke-width="3"/>
+    <path d="M914 244 H956" stroke="#c084fc" stroke-width="3"/>
+    <path d="M948 237 L958 244 L948 251" fill="none" stroke="#c084fc" stroke-width="3"/>
+  </g>
+  <rect x="54" y="382" width="1092" height="80" rx="16" fill="#0f2d3a" stroke="#285263"/>
+  <text x="78" y="414" fill="#dff8f2" font-family="Segoe UI, Arial, sans-serif" font-size="17">Streaming contract</text>
+  <text x="78" y="442" fill="#a7c7d4" font-family="Segoe UI, Arial, sans-serif" font-size="15">partial text → minimal backspace/insert diff → final text → session_end</text>
+  <circle cx="1062" cy="422" r="12" fill="#5eead4"/>
+  <text x="1084" y="427" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="13">ready</text>
+</svg>

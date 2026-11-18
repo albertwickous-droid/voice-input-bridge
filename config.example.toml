@@ -33,8 +33,9 @@ enabled = false
 
 [asr]
 # Built-ins: mock, aliyun, deepgram, command.
-# Third-party packages can register more providers through the
-# `voicebridge.providers` Python entry-point group.
+# Other vendors need a provider plugin or command adapter; see
+# docs/providers.md#vendor-integration-matrix. Third-party packages can
+# register providers through the `voicebridge.providers` entry-point group.
 provider = "mock"
 language = "zh-CN"
 

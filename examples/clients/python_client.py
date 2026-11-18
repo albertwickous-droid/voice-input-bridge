@@ -185,7 +185,9 @@ async def _tcp_receive(reader: asyncio.StreamReader) -> None:
 
 async def _run_tcp(args: argparse.Namespace) -> int:
     target = urlsplit(args.target)
-    reader, writer = await asyncio.open_connection(target.hostname or "127.0.0.1", target.port or 18767)
+    reader, writer = await asyncio.open_connection(
+        target.hostname or "127.0.0.1", target.port or 18767
+    )
 
     async def send_json(message: dict[str, Any]) -> None:
         writer.write(
@@ -242,7 +244,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wav", type=Path)
     parser.add_argument("--microphone", action="store_true")
     parser.add_argument("--seconds", type=float, default=5.0)
-    parser.add_argument("--no-realtime", action="store_true", help="send pre-recorded audio as fast as possible")
+    parser.add_argument(
+        "--no-realtime", action="store_true", help="send pre-recorded audio as fast as possible"
+    )
     return parser
 
 

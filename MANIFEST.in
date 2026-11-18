@@ -1,12 +1,19 @@
 include LICENSE
 include README.md
+include README.en.md
 include README.zh-CN.md
 include CHANGELOG.md
 include CONTRIBUTING.md
 include SECURITY.md
+include SUPPORT.md
+include THIRD_PARTY_NOTICES.md
+include PRIVACY.md
+include RESPONSIBLE_USE.md
+include DISCLAIMER.md
 include CODE_OF_CONDUCT.md
 include config.example.toml
 include config.demo.toml
 recursive-include docs *.md
+recursive-include assets *
 recursive-include examples *.py *.html *.ino *.md
 recursive-include scripts *.py

@@ -71,7 +71,10 @@ class SerialTransport:
             )
             if part
         )
-        if getattr(selected, "vid", None) not in _PREFERRED_VIDS and "usb" not in description.lower():
+        if (
+            getattr(selected, "vid", None) not in _PREFERRED_VIDS
+            and "usb" not in description.lower()
+        ):
             raise RuntimeError("no likely USB serial device found")
         return str(selected.device)
 
@@ -156,9 +159,7 @@ class SerialTransport:
             pass
         except ProtocolError as exc:
             with contextlib.suppress(Exception):
-                await send_json(
-                    {"type": "error", "code": "protocol_error", "message": str(exc)}
-                )
+                await send_json({"type": "error", "code": "protocol_error", "message": str(exc)})
         finally:
             closed.set()
             for task in (writer_task, reader_task):

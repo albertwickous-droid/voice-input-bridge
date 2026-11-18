@@ -66,24 +66,28 @@ class HttpStatusServer:
             elif path == "/v1/protocol":
                 status, body = 200, self.protocol_provider()
             elif path == "/":
-                status, body = 200, {
-                    "service": "voice-input-bridge",
-                    "endpoints": ["/health", "/v1/status", "/v1/protocol"],
-                }
+                status, body = (
+                    200,
+                    {
+                        "service": "voice-input-bridge",
+                        "endpoints": ["/health", "/v1/status", "/v1/protocol"],
+                    },
+                )
             else:
                 status, body = 404, {"error": "not_found"}
             keep_body = method != "HEAD"
         except (TimeoutError, ValueError, asyncio.LimitOverrunError) as exc:
             status, body = 400, {"error": "bad_request", "detail": str(exc)}
         except Exception as exc:
-            status, body = 500, {
-                "error": "internal_error",
-                "detail": f"{exc.__class__.__name__}: {exc}",
-            }
-        try:
-            encoded = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode(
-                "utf-8"
+            status, body = (
+                500,
+                {
+                    "error": "internal_error",
+                    "detail": f"{exc.__class__.__name__}: {exc}",
+                },
             )
+        try:
+            encoded = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
             reason = {
                 200: "OK",
                 400: "Bad Request",

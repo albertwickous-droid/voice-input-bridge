@@ -15,6 +15,7 @@ build/
 .venv/
 venv/
 .env
+config.toml
 config.local.toml
 *.local.toml
 *.pem

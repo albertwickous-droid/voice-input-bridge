@@ -18,6 +18,8 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     python = sys.executable
     run(python, "-m", "ruff", "check", ".", cwd=root)
+    run(python, "-m", "ruff", "format", "--check", ".", cwd=root)
+    run(python, "scripts/check_docs.py", cwd=root)
     run(python, "-m", "pytest", "-q", cwd=root)
     run(python, "-m", "compileall", "-q", "src", "tests", cwd=root)
     run(python, "-m", "build", "--no-isolation", cwd=root)

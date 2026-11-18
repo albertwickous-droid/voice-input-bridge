@@ -114,9 +114,7 @@ class ConnectionSession:
                 emit=self.send_json,
             )
         except SessionBusyError as exc:
-            await self.send_json(
-                {"type": "error", "code": "busy", "message": str(exc)}
-            )
+            await self.send_json({"type": "error", "code": "busy", "message": str(exc)})
 
     async def _stop(self) -> None:
         if self.handle is None:

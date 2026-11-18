@@ -5,13 +5,15 @@ Thanks for helping make device-agnostic dictation safer and easier to deploy.
 ## Development setup
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/voice-input-bridge.git
+git clone https://github.com/albertwickous-droid/voice-input-bridge.git
 cd voice-input-bridge
 python -m venv .venv
 # Windows: .venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ruff check .
+ruff format --check .
+python scripts/check_docs.py
 pytest -q
 ```
 
@@ -63,6 +65,8 @@ Use `StreamDecoder` so the wire contract stays identical. Instantiate one `Conne
 
 - `pytest -q`
 - `ruff check .`
+- `ruff format --check .`
+- `python scripts/check_docs.py`
 - `python -m compileall -q src tests`
 - WebSocket + TCP end-to-end with `mock`
 - HTTP status redacts transcript text
@@ -85,15 +89,19 @@ For hardware changes, include a redacted event trace and board pins/firmware ver
 ## Release checks
 
 ```bash
-python -m build
-twine check dist/*
-python -m pip install --force-reinstall dist/*.whl
-voicebridge --version
-voicebridge doctor --config config.demo.toml --json
+python -m ruff check .
+python -m ruff format --check .
+python scripts/check_docs.py
+python -m pytest -q
+python scripts/smoke_test.py
+python scripts/check_release.py
+python scripts/check_docs.py --external
 ```
 
-CI runs on Windows, macOS, and Linux for the supported Python versions. A release should also include a clean-environment WebSocket/TCP smoke test and a review of provider/dependency advisories.
+`check_release.py` covers the wheel/sdist build, Twine validation, clean-environment install, and CLI entry point. CI runs on Windows, macOS, and Linux for the supported Python versions. A release should also include a clean-environment WebSocket/TCP smoke test and a review of provider/dependency advisories.
 
 ## Security
 
 See `SECURITY.md`. Do not disclose credential or injection vulnerabilities in a public issue before coordinated remediation.
+
+Before a public release, run `python scripts/check_docs.py --external` to recheck external documentation links. Review provider links manually because some vendors block automated requests or require a region-specific network.

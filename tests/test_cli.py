@@ -41,6 +41,7 @@ backend = "null"
     assert output["ok"]
     assert all("api" not in item["detail"].lower() for item in output["checks"])
 
+
 def test_config_output_is_valid_toml(capsys) -> None:
     try:
         import tomllib
@@ -55,6 +56,7 @@ def test_config_output_is_valid_toml(capsys) -> None:
     assert code == 0
     assert parsed["server"]["ws_port"] == 18766
     assert parsed["input"]["backend"] == "null"
+
 
 def test_doctor_fails_when_required_token_is_empty(tmp_path: Path, capsys) -> None:
     config = make_config(require_token=True, token="")

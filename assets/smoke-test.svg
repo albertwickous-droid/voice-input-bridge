@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-labelledby="smokeTitle smokeDesc">
+  <title id="smokeTitle">Actual smoke test output</title>
+  <desc id="smokeDesc">A terminal-style rendering of the real Voice Input Bridge smoke test output: final, hello_ack, listening, partial, and session_end events passed.</desc>
+  <rect width="1200" height="340" rx="24" fill="#0b1220"/>
+  <circle cx="70" cy="54" r="8" fill="#fb7185"/>
+  <circle cx="96" cy="54" r="8" fill="#fbbf24"/>
+  <circle cx="122" cy="54" r="8" fill="#5eead4"/>
+  <text x="152" y="60" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="15">voice-input-bridge / actual smoke test</text>
+  <rect x="54" y="92" width="1092" height="168" rx="14" fill="#07101b" stroke="#1e3a4a"/>
+  <text x="82" y="132" fill="#5eead4" font-family="Consolas, monospace" font-size="17">PS&gt; python scripts/smoke_test.py</text>
+  <text x="82" y="170" fill="#e2e8f0" font-family="Consolas, monospace" font-size="17">Smoke test passed: final, hello_ack, listening, partial, session_end</text>
+  <text x="82" y="208" fill="#94a3b8" font-family="Consolas, monospace" font-size="15">WebSocket + TCP + HTTP mock path verified</text>
+  <text x="82" y="238" fill="#94a3b8" font-family="Consolas, monospace" font-size="15">pytest: 33 passed · Python 3.10 / 3.11 / 3.12</text>
+  <text x="54" y="306" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="14">Rendered from the command output captured during the local verification run.</text>
+</svg>

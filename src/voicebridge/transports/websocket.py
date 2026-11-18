@@ -110,9 +110,7 @@ class WebSocketTransport:
             close_code, close_reason = 1008, str(exc)
         except ProtocolError as exc:
             with contextlib.suppress(Exception):
-                await send_json(
-                    {"type": "error", "code": "protocol_error", "message": str(exc)}
-                )
+                await send_json({"type": "error", "code": "protocol_error", "message": str(exc)})
             close_code, close_reason = 1002, "protocol error"
         except Exception as exc:
             received = getattr(exc, "rcvd", None)

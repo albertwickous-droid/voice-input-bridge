@@ -69,6 +69,7 @@ async def test_connection_session_requires_valid_token() -> None:
     await accepted.handle_control({"type": "hello", "token": "correct"})
     assert messages[-1]["type"] == "hello_ack"
 
+
 @pytest.mark.asyncio
 async def test_session_stop_does_not_block_on_full_audio_queue() -> None:
     config = make_config()

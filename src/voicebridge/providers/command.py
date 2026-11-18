@@ -30,7 +30,11 @@ class CommandProvider(ASRProvider):
     def _decode_output(data: bytes | None, requested_encoding: str = "") -> str:
         if not data:
             return ""
-        candidates = [requested_encoding] if requested_encoding else ["utf-8", locale.getpreferredencoding(False)]
+        candidates = (
+            [requested_encoding]
+            if requested_encoding
+            else ["utf-8", locale.getpreferredencoding(False)]
+        )
         for encoding in candidates:
             if not encoding:
                 continue
@@ -52,7 +56,8 @@ class CommandProvider(ASRProvider):
             raise ProviderError("command provider command cannot be empty")
 
         max_bytes = int(
-            float(request.options.get("max_audio_seconds", 120)) * request.audio_format.bytes_per_second
+            float(request.options.get("max_audio_seconds", 120))
+            * request.audio_format.bytes_per_second
         )
         audio = bytearray()
         async for chunk in request.audio:

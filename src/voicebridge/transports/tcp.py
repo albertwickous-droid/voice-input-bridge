@@ -83,9 +83,7 @@ class TcpTransport:
             pass
         except ProtocolError as exc:
             with contextlib.suppress(Exception):
-                await send_json(
-                    {"type": "error", "code": "protocol_error", "message": str(exc)}
-                )
+                await send_json({"type": "error", "code": "protocol_error", "message": str(exc)})
         except (ConnectionError, asyncio.CancelledError):
             pass
         except Exception as exc:

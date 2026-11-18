@@ -51,8 +51,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_GITHUB_USER/voice-input-bridge"
-Issues = "https://github.com/YOUR_GITHUB_USER/voice-input-bridge/issues"
+Homepage = "https://github.com/albertwickous-droid/voice-input-bridge"
+Issues = "https://github.com/albertwickous-droid/voice-input-bridge/issues"
 
 [project.scripts]
 voicebridge = "voicebridge.cli:main"

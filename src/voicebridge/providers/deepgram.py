@@ -69,22 +69,16 @@ class DeepgramProvider(ASRProvider):
         ).strip()
         if not api_key:
             raise ProviderUnavailable("Deepgram requires DEEPGRAM_API_KEY")
-        endpoint = str(
-            request.options.get("endpoint", "wss://api.deepgram.com/v1/listen")
-        )
+        endpoint = str(request.options.get("endpoint", "wss://api.deepgram.com/v1/listen"))
         params = {
             "encoding": "linear16",
             "sample_rate": fmt.sample_rate,
             "channels": fmt.channels,
             "model": request.options.get("model", "nova-3"),
             "language": request.options.get("language", request.language),
-            "smart_format": str(
-                bool(request.options.get("smart_format", True))
-            ).lower(),
+            "smart_format": str(bool(request.options.get("smart_format", True))).lower(),
             "punctuate": str(bool(request.options.get("punctuate", True))).lower(),
-            "interim_results": str(
-                bool(request.options.get("interim_results", True))
-            ).lower(),
+            "interim_results": str(bool(request.options.get("interim_results", True))).lower(),
         }
         separator = "&" if "?" in endpoint else "?"
         uri = endpoint + separator + urlencode(params)

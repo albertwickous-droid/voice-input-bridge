@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 54" role="img" aria-labelledby="badgeTitle badgeDesc">
+  <title id="badgeTitle">Voice Input Bridge project badges</title>
+  <desc id="badgeDesc">Python 3.10 or newer, Windows and macOS, MIT license, alpha status.</desc>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600">
+    <rect x="0" y="4" width="170" height="42" rx="12" fill="#123246" stroke="#3b6273"/>
+    <text x="85" y="31" text-anchor="middle" fill="#bff7ef">Python 3.10+</text>
+    <rect x="184" y="4" width="190" height="42" rx="12" fill="#123246" stroke="#3b6273"/>
+    <text x="279" y="31" text-anchor="middle" fill="#bff7ef">Windows / macOS</text>
+    <rect x="388" y="4" width="128" height="42" rx="12" fill="#123246" stroke="#3b6273"/>
+    <text x="452" y="31" text-anchor="middle" fill="#bff7ef">MIT</text>
+    <rect x="530" y="4" width="128" height="42" rx="12" fill="#123246" stroke="#3b6273"/>
+    <text x="594" y="31" text-anchor="middle" fill="#fbbf24">alpha</text>
+  </g>
+</svg>

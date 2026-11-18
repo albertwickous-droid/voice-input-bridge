@@ -42,14 +42,20 @@ def _parser() -> argparse.ArgumentParser:
             help="TOML configuration file (default: ./config.toml or VOICEBRIDGE_CONFIG)",
         )
 
-    serve = sub.add_parser("serve", help="start HTTP, WebSocket, TCP, serial, and discovery services")
+    serve = sub.add_parser(
+        "serve", help="start HTTP, WebSocket, TCP, serial, and discovery services"
+    )
     config_argument(serve)
 
-    doctor = sub.add_parser("doctor", help="check installation, configuration, credentials, and ports")
+    doctor = sub.add_parser(
+        "doctor", help="check installation, configuration, credentials, and ports"
+    )
     config_argument(doctor)
     doctor.add_argument("--json", action="store_true", help="emit machine-readable JSON")
 
-    simulate = sub.add_parser("simulate", help="send synthetic PCM through a local WebSocket or TCP endpoint")
+    simulate = sub.add_parser(
+        "simulate", help="send synthetic PCM through a local WebSocket or TCP endpoint"
+    )
     simulate.add_argument(
         "--target",
         default="ws://127.0.0.1:18766/v1/audio",
@@ -59,7 +65,9 @@ def _parser() -> argparse.ArgumentParser:
     simulate.add_argument("--seconds", type=float, default=0.8)
     simulate.add_argument("--timeout", type=float, default=15.0)
 
-    config = sub.add_parser("config", help="print the effective configuration with secrets redacted")
+    config = sub.add_parser(
+        "config", help="print the effective configuration with secrets redacted"
+    )
     config_argument(config)
     config.add_argument("--json", action="store_true", help="emit JSON instead of TOML-like text")
 
@@ -148,9 +156,7 @@ def _run_doctor(args: argparse.Namespace, *, as_json: bool) -> int:
         *,
         severity: str = "error",
     ) -> None:
-        checks.append(
-            {"check": check, "status": status, "severity": severity, "detail": detail}
-        )
+        checks.append({"check": check, "status": status, "severity": severity, "detail": detail})
 
     add("platform", "pass", f"{platform.system()} {platform.release()} ({platform.machine()})")
     add("python", "pass", platform.python_version())
@@ -162,7 +168,11 @@ def _run_doctor(args: argparse.Namespace, *, as_json: bool) -> int:
 
     if config.transports.serial.enabled:
         installed = importlib.util.find_spec("serial") is not None
-        add("pyserial", "pass" if installed else "fail", "installed" if installed else "install the serial extra")
+        add(
+            "pyserial",
+            "pass" if installed else "fail",
+            "installed" if installed else "install the serial extra",
+        )
     if config.asr.provider == "aliyun":
         installed = importlib.util.find_spec("dashscope") is not None
         add(
@@ -171,10 +181,18 @@ def _run_doctor(args: argparse.Namespace, *, as_json: bool) -> int:
             "installed" if installed else "install the Aliyun extra",
         )
         key = _credential_configured(config, "api_key", "DASHSCOPE_API_KEY")
-        add("aliyun credentials", "pass" if key else "fail", "API key configured" if key else "DASHSCOPE_API_KEY is missing")
+        add(
+            "aliyun credentials",
+            "pass" if key else "fail",
+            "API key configured" if key else "DASHSCOPE_API_KEY is missing",
+        )
     elif config.asr.provider == "deepgram":
         key = _credential_configured(config, "api_key", "DEEPGRAM_API_KEY")
-        add("deepgram credentials", "pass" if key else "fail", "API key configured" if key else "DEEPGRAM_API_KEY is missing")
+        add(
+            "deepgram credentials",
+            "pass" if key else "fail",
+            "API key configured" if key else "DEEPGRAM_API_KEY is missing",
+        )
     elif config.asr.provider == "command":
         command = config.asr.options.get("command")
         add(
@@ -185,7 +203,12 @@ def _run_doctor(args: argparse.Namespace, *, as_json: bool) -> int:
     elif config.asr.provider == "mock":
         add("ASR provider", "pass", "mock provider needs no credentials")
     elif config.asr.provider in available_providers():
-        add("ASR provider", "warn", f"plugin '{config.asr.provider}' is installed; initialize it before use", severity="warning")
+        add(
+            "ASR provider",
+            "warn",
+            f"plugin '{config.asr.provider}' is installed; initialize it before use",
+            severity="warning",
+        )
     else:
         add("ASR provider", "fail", f"provider '{config.asr.provider}' is not installed")
 
@@ -216,7 +239,11 @@ def _run_doctor(args: argparse.Namespace, *, as_json: bool) -> int:
             add(name, "warn", "UDP port occupancy is not checked by doctor", severity="warning")
             continue
         available, error = _port_available(host, port)
-        add(name, "pass" if available else "fail", f"{host}:{port} available" if available else f"{host}:{port} unavailable: {error}")
+        add(
+            name,
+            "pass" if available else "fail",
+            f"{host}:{port} available" if available else f"{host}:{port} unavailable: {error}",
+        )
 
     if config.server.require_token and not config.server.token:
         add(
@@ -275,7 +302,9 @@ async def _receive_json_until(ws: Any, done: set[str], timeout: float) -> list[d
             return events
 
 
-async def _simulate_ws(target: str, token: str, seconds: float, timeout: float) -> list[dict[str, Any]]:
+async def _simulate_ws(
+    target: str, token: str, seconds: float, timeout: float
+) -> list[dict[str, Any]]:
     from websockets.asyncio.client import connect
 
     events: list[dict[str, Any]] = []
@@ -307,7 +336,9 @@ async def _simulate_ws(target: str, token: str, seconds: float, timeout: float) 
     return events
 
 
-async def _simulate_tcp(target: str, token: str, seconds: float, timeout: float) -> list[dict[str, Any]]:
+async def _simulate_tcp(
+    target: str, token: str, seconds: float, timeout: float
+) -> list[dict[str, Any]]:
     parsed = urlsplit(target)
     host = parsed.hostname or "127.0.0.1"
     port = parsed.port or 18767
@@ -315,7 +346,9 @@ async def _simulate_tcp(target: str, token: str, seconds: float, timeout: float)
     events: list[dict[str, Any]] = []
 
     async def send(message: dict[str, Any]) -> None:
-        writer.write((json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8"))
+        writer.write(
+            (json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+        )
         await writer.drain()
 
     async def receive_until(done: set[str]) -> None:

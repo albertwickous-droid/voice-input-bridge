@@ -32,9 +32,7 @@ class DiscoveryTransport:
             def connection_made(inner_self, transport: asyncio.DatagramTransport) -> None:
                 transport_holder["transport"] = transport
 
-            def datagram_received(
-                inner_self, data: bytes, address: tuple[str, int]
-            ) -> None:
+            def datagram_received(inner_self, data: bytes, address: tuple[str, int]) -> None:
                 if not self._is_discovery_request(data):
                     return
                 transport = transport_holder.get("transport")
@@ -50,9 +48,9 @@ class DiscoveryTransport:
                     "requiresToken": self.config.server.require_token,
                     "providers": [self.config.asr.provider],
                 }
-                encoded = json.dumps(
-                    payload, ensure_ascii=False, separators=(",", ":")
-                ).encode("utf-8")
+                encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode(
+                    "utf-8"
+                )
                 transport.sendto(encoded, address)
 
         try:

@@ -30,9 +30,7 @@ StreamItem = ControlMessage | AudioChunk
 
 
 def encode_control(message: dict[str, Any]) -> bytes:
-    return (json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n").encode(
-        "utf-8"
-    )
+    return (json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
 
 
 def encode_audio_frame(data: bytes, sequence: int = 0) -> bytes:
@@ -87,7 +85,7 @@ class StreamDecoder:
                 total = FRAME_HEADER.size + length
                 if len(self._buffer) < total:
                     break
-                payload = bytes(self._buffer[FRAME_HEADER.size:total])
+                payload = bytes(self._buffer[FRAME_HEADER.size : total])
                 del self._buffer[:total]
                 items.append(AudioChunk(payload, sequence=sequence))
                 continue
@@ -102,9 +100,7 @@ class StreamDecoder:
             newline = self._buffer.find(b"\n")
             if newline < 0:
                 if len(self._buffer) > self._max_control_bytes:
-                    raise ProtocolError(
-                        f"control line exceeds {self._max_control_bytes} bytes"
-                    )
+                    raise ProtocolError(f"control line exceeds {self._max_control_bytes} bytes")
                 break
 
             raw = bytes(self._buffer[:newline]).rstrip(b"\r")
@@ -112,9 +108,7 @@ class StreamDecoder:
             if not raw:
                 continue
             if len(raw) > self._max_control_bytes:
-                raise ProtocolError(
-                    f"control line exceeds {self._max_control_bytes} bytes"
-                )
+                raise ProtocolError(f"control line exceeds {self._max_control_bytes} bytes")
             try:
                 value = json.loads(raw.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:

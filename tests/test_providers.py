@@ -89,9 +89,7 @@ def test_deepgram_result_parser() -> None:
             "duration": 0.5,
             "is_final": True,
             "speech_final": True,
-            "channel": {
-                "alternatives": [{"transcript": "你好世界", "confidence": 0.98}]
-            },
+            "channel": {"alternatives": [{"transcript": "你好世界", "confidence": 0.98}]},
         }
     )
     assert result is not None
@@ -122,6 +120,7 @@ async def test_command_provider_reads_wav_and_returns_stdout(tmp_path: Path) -> 
     assert len(events) == 1
     assert events[0].final
     assert events[0].text == "命令识别结果。"
+
 
 @pytest.mark.asyncio
 async def test_aliyun_provider_preserves_event_order_with_fake_sdk(
@@ -191,6 +190,7 @@ async def test_aliyun_provider_preserves_event_order_with_fake_sdk(
     events = [event async for event in provider.stream(request)]
     assert [event.final for event in events] == [False, True]
     assert events[-1].text == "你好，世界。"
+
 
 async def _endless_audio():
     while True:
@@ -263,9 +263,7 @@ async def test_deepgram_error_does_not_wait_for_unfinished_audio(
         async def __anext__(self):
             if not self.sent_error:
                 self.sent_error = True
-                return json.dumps(
-                    {"type": "Error", "description": "upstream failed"}
-                )
+                return json.dumps({"type": "Error", "description": "upstream failed"})
             raise StopAsyncIteration
 
         async def send(self, data: bytes | str) -> None:
