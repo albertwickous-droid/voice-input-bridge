@@ -17,6 +17,8 @@ All notable changes to this project are documented here.
 - Added lowest-cost hardware guidance and verified dependency download links for M5StickS3 and ESP32 examples.
 - Added image-generation prompts without generating new visual assets.
 - Added the final AI-generated images to the README hero, Why now overview, architecture section, and hardware setup guide.
+- Added explicit wired, wireless, and Bluetooth connection-mode classification with a wired-first recommendation.
+- Added a plain-language one-liner and a copyable agent prompt near the top of both READMEs for choosing and setting up a connection mode.
 
 ### Fixed
 

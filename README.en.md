@@ -6,6 +6,14 @@
 
 Figure 1. AI-generated technical banner showing device audio, the bridge, real-time ASR, and the desktop input field, with vibe coding and smart-home hardware in the background. It is not a third-party product screenshot or runtime evidence.
 
+Voice Input Bridge is a bridge service that injects speech input from various peripherals into desktop text fields.
+
+If you do not understand the details below, copy the paragraph below to your agent and let it configure your device and network:
+
+```text
+I am using Voice Input Bridge (https://github.com/albertwickous-droid/voice-input-bridge). Please read the README and docs/hardware-setup.md, then decide whether my setup should use USB serial, wired Ethernet, Wi-Fi, or Bluetooth. If unsure, default to USB serial and give me step-by-step install, configuration, and verification commands. List the exact dependencies, official download URLs, config fields to change, and how to test without committing API keys, tokens, or Wi-Fi passwords.
+```
+
 > **Stop rebuilding a separate desktop dictation backend for every device.** If a device can send PCM audio, Voice Input Bridge can route cloud or local ASR `partial` / `final` text into the active Windows or macOS text field.
 
 Voice Input Bridge (`vib`) is a provider-neutral and transport-neutral speech-to-text daemon. An ESP32, M5Stick, browser, phone, or script streams audio over WebSocket, TCP, or USB serial. The bridge owns sessions, audio-format negotiation, incremental text edits, and foreground-window protection.
@@ -102,26 +110,36 @@ See [docs/providers.md](docs/providers.md) for provider contracts and configurat
 
 This table separates "the protocol or vendor can do it" from "this project already implements it": only rows marked **built in** can be enabled by configuration alone. Other options require a plugin, reverse proxy, or system configuration.
 
-| Option | Best fit | Current status / configuration | Caveat | Reference |
+### Connection mode classification (start here)
+
+| Mode | Included options | Status in this project | Recommendation | Fit and limits |
 | --- | --- | --- | --- | --- |
-| Wi-Fi / LAN device | ESP32, M5Stick, phone, or another local client | Built in through WebSocket or TCP | The bridge must listen on a reachable address; configure a token, firewall, and encryption boundary | [ESP32 example](examples/esp32/arduino_ws_mic), [troubleshooting](docs/troubleshooting.md#websocket-fails-from-another-machine) |
-| Bluetooth / BLE audio | Bluetooth microphone, headset, or BLE device | **Not built in**; the device or a separate capture client must send PCM | The bridge does not read the OS Bluetooth microphone; bandwidth, codec, and permissions are your responsibility | [Troubleshooting](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
-| USB microphone / UAC | Ordinary USB microphone or sound card | **Not built in**; a system capture client must convert audio to PCM | The USB serial transport is not USB audio/UAC capture | [Troubleshooting](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
-| Browser microphone | In-page recording and local tests | Built-in Web Audio + WebSocket example | Browser permission is required; pages normally need localhost or HTTPS | [Browser example](examples/clients/browser/index.html) |
-| WebSocket | Browser, ESP32, LAN devices, cross-platform clients | Built in; `transports.websocket.enabled = true` | Use `wss://` behind a TLS proxy; defaults to loopback | [WebSocket standard](https://websockets.spec.whatwg.org/), [protocol](docs/protocol.md#transports) |
-| TCP | Simple devices or serial gateways | Built in; `transports.tcp.enabled = true` | Plaintext protocol; do not expose directly to the internet | [RFC 9293](https://www.rfc-editor.org/rfc/rfc9293.html), [protocol](docs/protocol.md#transports) |
-| USB serial | USB CDC devices and board debug links | Built in; `[transports.serial]`, `port = "auto"` | Not a USB microphone/UAC path; the device must send `AUD1` frames | [pyserial docs](https://pyserial.readthedocs.io/en/latest/), [architecture](docs/architecture.md#serial) |
-| UDP discovery | Local bridge discovery | Optional; enable `[transports.discovery]` | Discovery is unauthenticated metadata only; disabled by default | [Discovery protocol](docs/protocol.md#discovery) |
-| Windows text injection | Normal Windows foreground fields | Built in; `input.backend = "windows"` | Foreground guard; cannot target a higher-integrity process | [Microsoft SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) |
-| macOS text injection | Normal macOS foreground fields | Built in; `input.backend = "macos"` | Accessibility permission required; validate on real macOS | [Apple CGEvent](https://developer.apple.com/documentation/coregraphics/cgevent) |
-| Clipboard fallback | Final-only fallback | Built in; `input.backend = "clipboard"` | Cannot reliably guard the target window; set `require_same_window = false` explicitly | [Input backends](docs/architecture.md#clipboard) |
-| stdout / null | Debugging, CI, protocol tests | Built in; `stdout` / `null` | Does not touch a real text field | [Architecture](docs/architecture.md#components) |
-| Custom InputSink | Special applications or remote injection | `backend = "module:Class"` plugin | Implement `TextSink` and audit the permission boundary | [Extension guide](docs/architecture.md#add-a-text-sink) |
-| Loopback | Single-machine use | Default `127.0.0.1` | Smallest exposure surface | [Security](SECURITY.md) |
-| LAN + token | Trusted local devices | `host = "0.0.0.0"` + token + firewall | Token authenticates but does not encrypt | [Security](SECURITY.md) |
-| TLS reverse proxy / WSS | Browser HTTPS pages or cross-segment use | Put a TLS proxy in front of WebSocket | Do not expose plaintext WebSocket publicly | [TLS 1.3 RFC](https://www.rfc-editor.org/rfc/rfc8446.html) |
-| VPN / Tailscale / WireGuard | Remote devices into a home or office machine | Network-layer encryption | Keep an application token and least-privilege access | [Tailscale](https://tailscale.com/), [WireGuard](https://www.wireguard.com/) |
-| Linux native text injection | Linux desktop text fields | **Not built in**; use `stdout`, clipboard, or a custom `InputSink` | Do not describe the Linux core path as native injection | [Input backends](docs/architecture.md#input-backends) |
+| Wired | USB CDC serial; TCP/WebSocket over wired Ethernet | Serial built in; TCP/WebSocket can run over wired IP | 1 (preferred) | Best latency and stability for a fixed setup near the PC. USB serial requires the device to send `AUD1` PCM frames; it is not USB microphone/UAC capture. |
+| Wireless | 2.4 GHz Wi-Fi with WebSocket/TCP; browser Web Audio | Built in | 2 | Flexible and cable-free for ESP32/M5StickS3, phones, and browsers. Requires Wi-Fi, IP, token, firewall configuration, and TLS/VPN across network segments. |
+| Bluetooth / BLE | Bluetooth microphones, headsets, BLE audio devices | **Not built in** | 3 (not recommended yet) | The bridge does not read the OS Bluetooth microphone. A device or separate capture client must convert audio to PCM first. BLE bandwidth, codec, and permission limits make it a poor first choice for real-time PCM. |
+
+**Bottom line:** choose wired USB serial when the board is next to the PC; use Wi-Fi when mobility or distance matters; treat Bluetooth as a future custom-capture extension rather than an out-of-the-box path.
+
+| Category | Option | Best fit | Current status / configuration | Caveat | Reference |
+| --- | --- | --- | --- | --- | --- |
+| Wireless | Wi-Fi / LAN device | ESP32, M5Stick, phone, or another local client | Built in through WebSocket or TCP | The bridge must listen on a reachable address; configure a token, firewall, and encryption boundary | [ESP32 example](examples/esp32/arduino_ws_mic), [troubleshooting](docs/troubleshooting.md#websocket-fails-from-another-machine) |
+| Bluetooth | Bluetooth / BLE audio | Bluetooth microphone, headset, or BLE device | **Not built in**; the device or a separate capture client must send PCM | The bridge does not read the OS Bluetooth microphone; bandwidth, codec, and permissions are your responsibility | [Troubleshooting](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
+| Wired | USB microphone / UAC | Ordinary USB microphone or sound card | **Not built in**; a system capture client must convert audio to PCM | The USB serial transport is not USB audio/UAC capture | [Troubleshooting](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
+| Wireless | Browser microphone | In-page recording and local tests | Built-in Web Audio + WebSocket example | Browser permission is required; pages normally need localhost or HTTPS | [Browser example](examples/clients/browser/index.html) |
+| Protocol | WebSocket | Browser, ESP32, LAN devices, cross-platform clients | Built in; `transports.websocket.enabled = true` | Use `wss://` behind a TLS proxy; defaults to loopback | [WebSocket standard](https://websockets.spec.whatwg.org/), [protocol](docs/protocol.md#transports) |
+| Protocol | TCP | Simple devices or serial gateways | Built in; `transports.tcp.enabled = true` | Plaintext protocol; do not expose directly to the internet | [RFC 9293](https://www.rfc-editor.org/rfc/rfc9293.html), [protocol](docs/protocol.md#transports) |
+| Wired | USB serial | USB CDC devices and board debug links | Built in; `[transports.serial]`, `port = "auto"` | Not a USB microphone/UAC path; the device must send `AUD1` frames | [pyserial docs](https://pyserial.readthedocs.io/en/latest/), [architecture](docs/architecture.md#serial) |
+| Network | UDP discovery | Local bridge discovery | Optional; enable `[transports.discovery]` | Discovery is unauthenticated metadata only; disabled by default | [Discovery protocol](docs/protocol.md#discovery) |
+| Injection | Windows text injection | Normal Windows foreground fields | Built in; `input.backend = "windows"` | Foreground guard; cannot target a higher-integrity process | [Microsoft SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) |
+| Injection | macOS text injection | Normal macOS foreground fields | Built in; `input.backend = "macos"` | Accessibility permission required; validate on real macOS | [Apple CGEvent](https://developer.apple.com/documentation/coregraphics/cgevent) |
+| Injection | Clipboard fallback | Final-only fallback | Built in; `input.backend = "clipboard"` | Cannot reliably guard the target window; set `require_same_window = false` explicitly | [Input backends](docs/architecture.md#clipboard) |
+| Debug | stdout / null | Debugging, CI, protocol tests | Built in; `stdout` / `null` | Does not touch a real text field | [Architecture](docs/architecture.md#components) |
+| Injection | Custom InputSink | Special applications or remote injection | `backend = "module:Class"` plugin | Implement `TextSink` and audit the permission boundary | [Extension guide](docs/architecture.md#add-a-text-sink) |
+| Network | Loopback | Single-machine use | Default `127.0.0.1` | Smallest exposure surface | [Security](SECURITY.md) |
+| Network | LAN + token | Trusted local devices | `host = "0.0.0.0"` + token + firewall | Token authenticates but does not encrypt | [Security](SECURITY.md) |
+| Network | TLS reverse proxy / WSS | Browser HTTPS pages or cross-segment use | Put a TLS proxy in front of WebSocket | Do not expose plaintext WebSocket publicly | [TLS 1.3 RFC](https://www.rfc-editor.org/rfc/rfc8446.html) |
+| Network | VPN / Tailscale / WireGuard | Remote devices into a home or office machine | Network-layer encryption | Keep an application token and least-privilege access | [Tailscale](https://tailscale.com/), [WireGuard](https://www.wireguard.com/) |
+| Platform | Linux native text injection | Linux desktop text fields | **Not built in**; use `stdout`, clipboard, or a custom `InputSink` | Do not describe the Linux core path as native injection | [Input backends](docs/architecture.md#input-backends) |
 
 > **Important boundary:** this project is not a system microphone recorder and does not automatically read the OS default microphone or Bluetooth headset. A device, browser, script, or custom capture client must convert audio to PCM and send it over WebSocket, TCP, or serial.
 

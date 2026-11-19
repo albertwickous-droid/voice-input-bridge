@@ -6,6 +6,14 @@
 
 图 1：AI 生成的技术首图，展示设备音频、桥接服务、实时 ASR 与桌面输入框之间的关系，同时呈现 vibe coding 与智能家居硬件背景。它不是第三方产品截图，也不是运行证据。
 
+Voice Input Bridge 是一个把各种外设的语音输入注入到桌面输入框的桥接服务。
+
+如果你不懂以下内容，直接复制下面一段话给你的 agent，让它根据你的设备和网络情况完成配置：
+
+```text
+我正在使用 Voice Input Bridge（https://github.com/albertwickous-droid/voice-input-bridge）。请阅读 README 和 docs/hardware-setup.md，先判断我的设备适合有线 USB 串口、有线以太网、Wi-Fi 还是蓝牙；如果不确定，优先按有线 USB 串口方案给我一步步的安装、配置和验证命令。请明确列出需要安装的依赖、官方下载地址、需要修改的配置文件，以及如何在不提交 API key、token 和 Wi-Fi 密码的情况下完成测试。
+```
+
 > **不再为每台外设重写一套语音输入后端。** 只要设备能发送 PCM 音频，Voice Input Bridge 就能把云端或本地 ASR 的 `partial` / `final` 文字送进 Windows/macOS 当前输入框。
 
 Voice Input Bridge（`vib`）是一个与设备、ASR 厂家和文字注入方式解耦的语音转文字桥接服务。ESP32、M5Stick、浏览器、手机或脚本通过 WebSocket、TCP 或串口发送录音；桥接层负责会话、格式协商、增量文本修正和前台窗口保护。
@@ -102,26 +110,36 @@ Voice Input Bridge（`vib`）是一个与设备、ASR 厂家和文字注入方�
 
 这张表区分“协议或厂商已有能力”和“本项目已实现”：只有标记为“内置”的配置可以直接启用。其他方案需要插件、反向代理或系统配置。
 
-| 方案 | 适合场景 | 当前状态 / 配置 | 注意事项 | 参考 |
+### 连接模式分类（先看这里）
+
+| 连接模式 | 包含方案 | 本项目状态 | 推荐顺序 | 适用与限制 |
 | --- | --- | --- | --- | --- |
-| Wi-Fi / LAN 设备 | ESP32、M5Stick、手机或同一局域网内客户端 | 内置；通过 WebSocket 或 TCP 连接桥接服务 | 桥接服务需监听可达地址；跨设备时配置 token、防火墙和加密边界 | [ESP32 示例](examples/esp32/arduino_ws_mic)、[排错](docs/troubleshooting.md#websocket-fails-from-another-machine) |
-| 蓝牙 / BLE 音频 | 蓝牙麦克风、耳机或 BLE 设备 | **未内置**；需设备端或独立客户端先采集并发送 PCM | 本项目不直接读取系统蓝牙麦克风；BLE 带宽、编解码和权限需自行处理 | [排错](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
-| USB 麦克风 / UAC | 普通 USB 麦克风或声卡 | **未内置**；需系统录音客户端转成 PCM 后发送 | USB 串口 transport 不是 USB 音频/UAC 采集 | [排错](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
-| 浏览器麦克风 | 浏览器页面内录音和本地测试 | 内置 Web Audio + WebSocket 示例 | 需要浏览器授权；页面通常要求 localhost 或 HTTPS | [浏览器示例](examples/clients/browser/index.html) |
-| WebSocket | 浏览器、ESP32、局域网设备、跨平台客户端 | 内置；`transports.websocket.enabled = true` | 反向代理后可提供 `wss://`；默认只监听 loopback | [WebSocket 标准](https://websockets.spec.whatwg.org/)、[协议文档](docs/protocol.md#transports) |
-| TCP | 简单设备、串口网关、无 WebSocket 栈的客户端 | 内置；`transports.tcp.enabled = true` | 明文协议；不要直接暴露公网 | [RFC 9293](https://www.rfc-editor.org/rfc/rfc9293.html)、[协议文档](docs/protocol.md#transports) |
-| USB 串口 | USB CDC 串口设备、开发板调试线 | 内置；`[transports.serial]`，`port = "auto"` | 不是 USB 麦克风/UAC；需要设备端按 `AUD1` 帧发送 | [pyserial 文档](https://pyserial.readthedocs.io/en/latest/)、[架构](docs/architecture.md#serial) |
-| UDP discovery | 局域网发现桥接服务 | 可选；`[transports.discovery] enabled = true` | 只发现地址，不认证、不加密，默认关闭 | [发现协议](docs/protocol.md#discovery) |
-| Windows 文字注入 | Windows 普通前台应用 | 内置 `input.backend = "windows"` | 前台窗口保护；不能向更高权限窗口注入 | [Microsoft SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) |
-| macOS 文字注入 | macOS 普通前台应用 | 内置 `input.backend = "macos"` | 需要 Accessibility 权限；需真实 macOS 验证 | [Apple CGEvent](https://developer.apple.com/documentation/coregraphics/cgevent) |
-| 剪贴板兜底 | final-only、其他输入后端不可用 | 内置 `input.backend = "clipboard"` | 不能可靠保护前台窗口，必须显式 `require_same_window = false` | [输入后端说明](docs/architecture.md#clipboard) |
-| stdout / null | 调试、CI、协议测试 | 内置 `stdout` / `null` | 不触碰真实输入框 | [架构](docs/architecture.md#components) |
-| 自定义 InputSink | 特殊应用或远程注入 | `backend = "module:Class"` 插件 | 需要实现 `TextSink` 接口并自行审计权限边界 | [扩展说明](docs/architecture.md#add-a-text-sink) |
-| 本机直连 | 单机使用 | 默认 `127.0.0.1` | 最小暴露面，推荐默认 | [安全说明](SECURITY.md) |
-| LAN + token | 可信局域网设备 | `host = "0.0.0.0"` + token + 防火墙 | token 只认证，不加密；先确认局域网边界 | [安全说明](SECURITY.md) |
-| TLS 反向代理 / WSS | 跨网段或浏览器 HTTPS 页面 | WebSocket 前置 TLS 代理 | 不要让明文 WebSocket 直接暴露公网 | [TLS 1.3 RFC](https://www.rfc-editor.org/rfc/rfc8446.html) |
-| VPN / Tailscale / WireGuard | 远程设备接入家庭或办公机 | 网络层加密 | 仍需应用层 token 和最小权限 | [Tailscale](https://tailscale.com/)、[WireGuard](https://www.wireguard.com/) |
-| Linux 原生文字注入 | Linux 桌面输入框 | **未内置**；可用 `stdout`、剪贴板或自定义 `InputSink` | 不要把 Linux 核心运行能力写成原生注入能力 | [输入后端](docs/architecture.md#input-backends) |
+| 有线 | USB CDC 串口；有线以太网上的 TCP / WebSocket | 串口内置；TCP / WebSocket 可运行在有线 IP 网络上 | 1（最推荐） | 延迟和稳定性最好，适合开发板靠近电脑的固定部署。USB 串口要求设备直接发送 `AUD1` PCM 帧，不是 USB 麦克风/UAC。 |
+| 无线 | 2.4 GHz Wi-Fi + WebSocket / TCP；浏览器 Web Audio | 内置 | 2 | 灵活、布线少，适合 ESP32/M5StickS3 和手机/浏览器客户端；需要配置 Wi-Fi、IP、token、防火墙，跨网段时用 TLS/VPN。 |
+| 蓝牙 / BLE | 蓝牙麦克风、耳机、BLE 音频设备 | **未内置** | 3（暂不推荐） | 本项目不读取系统蓝牙麦克风；必须由设备端或独立采集客户端先转成 PCM。BLE 带宽、编解码和权限限制明显，不适合作为实时 PCM 首选。 |
+
+**结论：** 如果设备就在电脑旁，优先选有线 USB 串口；需要移动或远离电脑时再用 Wi-Fi；蓝牙目前只适合作为自定义采集客户端的扩展方向，不是开箱即用路径。
+
+| 类别 | 方案 | 适合场景 | 当前状态 / 配置 | 注意事项 | 参考 |
+| --- | --- | --- | --- | --- | --- |
+| 无线 | Wi-Fi / LAN 设备 | ESP32、M5Stick、手机或同一局域网内客户端 | 内置；通过 WebSocket 或 TCP 连接桥接服务 | 桥接服务需监听可达地址；跨设备时配置 token、防火墙和加密边界 | [ESP32 示例](examples/esp32/arduino_ws_mic)、[排错](docs/troubleshooting.md#websocket-fails-from-another-machine) |
+| 蓝牙 | 蓝牙 / BLE 音频 | 蓝牙麦克风、耳机或 BLE 设备 | **未内置**；需设备端或独立客户端先采集并发送 PCM | 本项目不直接读取系统蓝牙麦克风；BLE 带宽、编解码和权限需自行处理 | [排错](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
+| 有线 | USB 麦克风 / UAC | 普通 USB 麦克风或声卡 | **未内置**；需系统录音客户端转成 PCM 后发送 | USB 串口 transport 不是 USB 音频/UAC 采集 | [排错](docs/troubleshooting.md#the-microphone-is-not-the-default-device) |
+| 无线 | 浏览器麦克风 | 浏览器页面内录音和本地测试 | 内置 Web Audio + WebSocket 示例 | 需要浏览器授权；页面通常要求 localhost 或 HTTPS | [浏览器示例](examples/clients/browser/index.html) |
+| 协议 | WebSocket | 浏览器、ESP32、局域网设备、跨平台客户端 | 内置；`transports.websocket.enabled = true` | 反向代理后可提供 `wss://`；默认只监听 loopback | [WebSocket 标准](https://websockets.spec.whatwg.org/)、[协议文档](docs/protocol.md#transports) |
+| 协议 | TCP | 简单设备、串口网关、无 WebSocket 栈的客户端 | 内置；`transports.tcp.enabled = true` | 明文协议；不要直接暴露公网 | [RFC 9293](https://www.rfc-editor.org/rfc/rfc9293.html)、[协议文档](docs/protocol.md#transports) |
+| 有线 | USB 串口 | USB CDC 串口设备、开发板调试线 | 内置；`[transports.serial]`，`port = "auto"` | 不是 USB 麦克风/UAC；需要设备端按 `AUD1` 帧发送 | [pyserial 文档](https://pyserial.readthedocs.io/en/latest/)、[架构](docs/architecture.md#serial) |
+| 网络 | UDP discovery | 局域网发现桥接服务 | 可选；`[transports.discovery] enabled = true` | 只发现地址，不认证、不加密，默认关闭 | [发现协议](docs/protocol.md#discovery) |
+| 注入 | Windows 文字注入 | Windows 普通前台应用 | 内置 `input.backend = "windows"` | 前台窗口保护；不能向更高权限窗口注入 | [Microsoft SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) |
+| 注入 | macOS 文字注入 | macOS 普通前台应用 | 内置 `input.backend = "macos"` | 需要 Accessibility 权限；需真实 macOS 验证 | [Apple CGEvent](https://developer.apple.com/documentation/coregraphics/cgevent) |
+| 注入 | 剪贴板兜底 | final-only、其他输入后端不可用 | 内置 `input.backend = "clipboard"` | 不能可靠保护前台窗口，必须显式 `require_same_window = false` | [输入后端说明](docs/architecture.md#clipboard) |
+| 调试 | stdout / null | 调试、CI、协议测试 | 内置 `stdout` / `null` | 不触碰真实输入框 | [架构](docs/architecture.md#components) |
+| 注入 | 自定义 InputSink | 特殊应用或远程注入 | `backend = "module:Class"` 插件 | 需要实现 `TextSink` 接口并自行审计权限边界 | [扩展说明](docs/architecture.md#add-a-text-sink) |
+| 网络边界 | 本机直连 | 单机使用 | 默认 `127.0.0.1` | 最小暴露面，推荐默认 | [安全说明](SECURITY.md) |
+| 网络边界 | LAN + token | 可信局域网设备 | `host = "0.0.0.0"` + token + 防火墙 | token 只认证，不加密；先确认局域网边界 | [安全说明](SECURITY.md) |
+| 网络边界 | TLS 反向代理 / WSS | 跨网段或浏览器 HTTPS 页面 | WebSocket 前置 TLS 代理 | 不要让明文 WebSocket 直接暴露公网 | [TLS 1.3 RFC](https://www.rfc-editor.org/rfc/rfc8446.html) |
+| 网络边界 | VPN / Tailscale / WireGuard | 远程设备接入家庭或办公机 | 网络层加密 | 仍需应用层 token 和最小权限 | [Tailscale](https://tailscale.com/)、[WireGuard](https://www.wireguard.com/) |
+| 平台 | Linux 原生文字注入 | Linux 桌面输入框 | **未内置**；可用 `stdout`、剪贴板或自定义 `InputSink` | 不要把 Linux 核心运行能力写成原生注入能力 | [输入后端](docs/architecture.md#input-backends) |
 
 > **重要边界：** 本项目不是系统麦克风采集器，也不会自动读取“默认麦克风”或蓝牙耳机。音频必须由设备、浏览器、脚本或你自行实现的采集客户端转换为 PCM，再通过 WebSocket、TCP 或串口送入桥接服务。
 
